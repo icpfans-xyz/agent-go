@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/base64"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -109,11 +109,46 @@ func (a *HttpAgent) GetPrincipal() *principal.Principal {
 	return a.identity.GetPrincipal()
 }
 
-func (a *HttpAgent) ReadState(effectiveCanisterId *principal.Principal, options *ainterface.ReadStateOptions) (*ainterface.ReadStateResponse, error) {
-	return nil, errors.New("undefined")
+func (a *HttpAgent) ReadState(canisterId *principal.Principal, options *ainterface.ReadStateOptions) (*ainterface.ReadStateResponse, error) {
+	sender := a.identity.GetPrincipal()
+	state := &ReadStateRequest{
+		requestType: "read_state",
+		paths:       options.Paths,
+		sender:      sender,
+		expiry:      NewExpiry(DEFAULT_INGRESS_EXPIRY_DELTA_IN_MSECS),
+	}
+
+	request := &HttpAgentRequest{
+		request: &HttpRequest{
+			Body:    nil,
+			Method:  "POST",
+			Headers: map[string]string{"Content-Type": "application/cbor"},
+		},
+		endpoint: string(EndpointReadState),
+		body:     state,
+	}
+	if len(a.credentials) > 0 {
+		request.request.Headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(a.credentials))
+	}
+	transformRequest := a.identity.TransformRequest(request)
+	body, err := cbor.Marshal(transformRequest.RequestBody())
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf("/api/v2/canister/%s/read_state", canisterId.ToString())
+	resp, err := a.fetch(path, request.request, body)
+	if err != nil {
+		return nil, err
+	}
+	var response ainterface.ReadStateResponse
+	err = cbor.Unmarshal(resp, &response)
+	if err != nil {
+		return nil, err
+	}
+	return &response, nil
 }
 
-func (a *HttpAgent) fetch(path string, request *HttpRequest, body []byte) (*ainterface.Response, error) {
+func (a *HttpAgent) fetch(path string, request *HttpRequest, body []byte) ([]byte, error) {
 	client := &http.Client{}
 	url := a.host + path
 	req, err := http.NewRequest(request.Method, url, bytes.NewReader(body))
@@ -128,12 +163,7 @@ func (a *HttpAgent) fetch(path string, request *HttpRequest, body []byte) (*aint
 	if err != nil {
 		return nil, err
 	}
-	var response ainterface.Response
-	err = cbor.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
-	}
-	return &response, nil
+	return body, nil
 }
 
 func (a *HttpAgent) Call(canisterId *principal.Principal, options *ainterface.CallOptions) (*ainterface.SubmitResponse, error) {
@@ -173,25 +203,93 @@ func (a *HttpAgent) Call(canisterId *principal.Principal, options *ainterface.Ca
 	if err != nil {
 		return nil, err
 	}
-	if !resp.OK {
-		return nil, xerrors.Errorf("Server returned an error:", resp.Status, resp.StatusText)
+	var response ainterface.Response
+	err = cbor.Unmarshal(resp, &response)
+	if err != nil {
+		return nil, err
+	}
+	if !response.OK {
+		return nil, xerrors.Errorf("Server returned an error:", response.Status, response.StatusText)
 	}
 	requestId := ainterface.RequestIdOf(submit)
 
 	return &ainterface.SubmitResponse{
 		RequestId: requestId,
-		Response:  *resp,
+		Response:  response,
 	}, nil
 }
 
 func (a *HttpAgent) Status() ([]byte, error) {
-	return nil, errors.New("undefined")
+	request := &HttpRequest{
+		Method: "GET",
+		Body:   nil,
+	}
+	if len(a.credentials) > 0 {
+		request.Headers = map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(a.credentials))}
+	}
+	resp, err := a.fetch("/api/v2/status", request, nil)
+	if err != nil {
+		return nil, err
+	}
+	var response ainterface.StatusResponse
+	err = json.Unmarshal(resp, &response)
+	if err != nil {
+		return nil, err
+	}
+	return response.RootKey, nil
 }
 
 func (a *HttpAgent) Query(canisterId *principal.Principal, options *ainterface.QueryFields) (*ainterface.QueryResponse, error) {
-	return nil, errors.New("undefined")
+	sender := a.identity.GetPrincipal()
+	query := &QueryRequest{
+		requestType: "query",
+		canisterId:  canisterId,
+		method:      options.MethodName,
+		arg:         options.Arg,
+		sender:      sender,
+		expiry:      NewExpiry(DEFAULT_INGRESS_EXPIRY_DELTA_IN_MSECS),
+	}
+	request := &HttpAgentRequest{
+		request: &HttpRequest{
+			Body:    nil,
+			Method:  "POST",
+			Headers: map[string]string{"Content-Type": "application/cbor"},
+		},
+		endpoint: string(EndpointQuery),
+		body:     query,
+	}
+	if len(a.credentials) > 0 {
+		request.request.Headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(a.credentials))
+	}
+	transformRequest := a.identity.TransformRequest(request)
+	body, err := cbor.Marshal(transformRequest.RequestBody())
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf("/api/v2/canister/%s/query", canisterId.ToString())
+	resp, err := a.fetch(path, request.request, body)
+	if err != nil {
+		return nil, err
+	}
+	var response ainterface.QueryResponse
+	err = cbor.Unmarshal(resp, &response)
+	if err != nil {
+		return nil, err
+	}
+	if !response.OK {
+		return nil, xerrors.Errorf("Server returned an error:", response.Status, response.StatusText)
+	}
+
+	return &response, nil
 }
 
 func (a *HttpAgent) FetchRootKey() ([]byte, error) {
-	return nil, errors.New("undefined")
+	if !a.rootKeyFetched {
+		bytes, err := a.Status()
+		if err != nil {
+			return nil, err
+		}
+		a.rootKey = bytes
+	}
+	return a.rootKey, nil
 }

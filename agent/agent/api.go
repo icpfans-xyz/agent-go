@@ -30,6 +30,7 @@ type Request interface {
 }
 
 type ReadStateResponse struct {
+	Response
 	Certificate []byte
 }
 
@@ -58,8 +59,8 @@ type Response struct {
 }
 
 type SubmitResponse struct {
+	Response
 	RequestId RequestId
-	Response  Response
 }
 
 type QueryFields struct {
@@ -79,7 +80,13 @@ const (
 	QueryResponseStatusRejected = "rejected"
 )
 
+type StatusResponse struct {
+	Response
+	RootKey []byte
+}
+
 type QueryResponse struct {
+	Response
 	Status string
 }
 
