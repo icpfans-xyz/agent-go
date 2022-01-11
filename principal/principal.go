@@ -8,16 +8,15 @@ import (
 	"github.com/dfinity/agent-go/principal/utils"
 )
 
-const SELF_AUTHENTICATING_SUFFIX = 2
-const ANONYMOUS_SUFFIX = 4
+const SELF_AUTHENTICATING_SUFFIX = 0x02
+const ANONYMOUS_SUFFIX = 0x04
 
 type Principal struct {
-	bytes       []byte
-	isPrincipal bool
+	Bytes []byte
 }
 
 func NewPrincipal(bytes []byte) *Principal {
-	return &Principal{bytes: bytes}
+	return &Principal{Bytes: bytes}
 }
 
 func Anonymous() *Principal {
@@ -26,7 +25,7 @@ func Anonymous() *Principal {
 
 func SelfAuthenticating(publicKey []byte) (*Principal, error) {
 	sha := utils.Sha224(publicKey)
-	bytes := append(sha, SELF_AUTHENTICATING_SUFFIX)
+	bytes := append(sha[:], SELF_AUTHENTICATING_SUFFIX)
 	return NewPrincipal(bytes), nil
 }
 
@@ -40,8 +39,7 @@ func FromHex(hex string) (*Principal, error) {
 
 func FromString(str string) (*Principal, error) {
 	lowerStr := strings.ToLower(str)
-	regex := regexp.MustCompile(`/-/g`)
-	fixedStr := regex.ReplaceAllString(lowerStr, "")
+	fixedStr := strings.ReplaceAll(lowerStr, "-", "")
 	bytes, err := utils.Base32Decode(fixedStr)
 	if err != nil {
 		return nil, err
@@ -58,22 +56,36 @@ func FromBytes(bytes []byte) (*Principal, error) {
 	return NewPrincipal(bytes), nil
 }
 
+func (p *Principal) MarshalCBOR() ([]byte, error) {
+	return p.ToBytes(), nil
+}
+
 func (p *Principal) IsAnonymous() bool {
-	return len(p.bytes) == 1 && p.bytes[0] == ANONYMOUS_SUFFIX
+	return len(p.Bytes) == 1 && p.Bytes[0] == ANONYMOUS_SUFFIX
 }
 
 func (p *Principal) ToBytes() []byte {
-	return p.bytes
+	return p.Bytes
 }
 
 func (p *Principal) ToHex() string {
-	return strings.ToUpper(utils.Hex(p.bytes))
+	return strings.ToUpper(utils.Hex(p.Bytes))
 }
 
 func (p *Principal) ToString() string {
-	checkSum := utils.FromUint32(utils.Crc32(p.bytes))
-	bytes := append(checkSum, p.bytes...)
-	regex := regexp.MustCompile(`/.{1,5}/g`)
-	matchs := regex.FindStringSubmatch(utils.Base32Encode(bytes))
+	checkSum := utils.FromUint32(utils.Crc32(p.Bytes))
+	bytes := append(checkSum, p.Bytes...)
+	result := utils.Base32Encode(bytes)
+	re := regexp.MustCompile(`.{1,5}`)
+	matchs := re.FindAllString(result, -1)
 	return strings.Join(matchs, "-")
+}
+
+func (p *Principal) Encode() []byte {
+	return p.ToBytes()
+}
+
+func (p *Principal) Decode(bytes []byte) error {
+	p.Bytes = bytes
+	return nil
 }

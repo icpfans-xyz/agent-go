@@ -1,13 +1,16 @@
 module github.com/dfinity/agent-go
 
-go 1.14
+go 1.16
 
-// replace github.com/dfinity/agent-go => ./
+replace github.com/dfinity/agent-go => ./
 
 require (
-	github.com/dgraph-io/badger/v2 v2.2007.4
-	github.com/fxamacker/cbor/v2 v2.3.0
-	github.com/ipld/go-ipld-prime v0.12.0
-	github.com/whyrusleeping/cbor v0.0.0-20171005072247-63513f603b11
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
+	github.com/aviate-labs/leb128 v0.3.0
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fxamacker/cbor/v2 v2.4.0
+	github.com/kr/pretty v0.2.1 // indirect
+	github.com/mix-labs/IC-Go v0.0.1 // indirect
+	github.com/stretchr/testify v1.4.0
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )

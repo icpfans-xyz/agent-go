@@ -15,19 +15,13 @@ const (
 )
 
 type ReadStateOptions struct {
-	Paths [][]byte
+	Paths [][][]byte
 }
 
-type RequestBody interface {
-	Type() string
-	Method() string
-	Sender() *principal.Principal
-}
-
-type Request interface {
-	Endpoint() string
-	RequestBody() RequestBody
-}
+// type Request interface {
+// 	Endpoint() string
+// 	RequestBody() interface{}
+// }
 
 type ReadStateResponse struct {
 	Response
@@ -81,13 +75,22 @@ const (
 )
 
 type StatusResponse struct {
-	Response
-	RootKey []byte
+	IcApiVersion        string                 `cbor:"ic_api_version"`
+	ImplSource          string                 `cbor:"impl_source,omitempty"`
+	ImplVersion         string                 `cbor:"impl_version,omitempty"`
+	ImplRevision        string                 `cbor:"impl_revision,omitempty"`
+	ReplicaHealthStatus string                 `cbor:"replica_health_status,omitempty"`
+	RootKey             []byte                 `cbor:"root_key,omitempty"`
+	Values              map[string]interface{} `cbor:"values,omitempty"`
 }
 
 type QueryResponse struct {
-	Response
-	Status string
+	// Response
+	// Status string
+	Status     string            `cbor:"status"`
+	Reply      map[string][]byte `cbor:"reply"`
+	RejectCode uint64            `cbor:"reject_code"`
+	RejectMsg  string            `cbor:"reject_message"`
 }
 
 type QueryResponseReplied struct {

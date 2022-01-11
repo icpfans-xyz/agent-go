@@ -30,5 +30,5 @@ type Identity interface {
 	 * after the transforms on the body of a request. The returned object can be
 	 * anything, but must be serializable to CBOR.
 	 */
-	TransformRequest(agent.Request) agent.Request
+	TransformRequest(agent.Request) (*TransformRequest, error)
 }

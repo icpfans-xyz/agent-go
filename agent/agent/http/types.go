@@ -1,8 +1,7 @@
 package http
 
 import (
-	"github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/principal"
+	ainterface "github.com/dfinity/agent-go/agent/agent"
 )
 
 type Endpoint string
@@ -15,99 +14,25 @@ const (
 
 type HttpAgentBaseRequest interface {
 	Endpoint() string
-	RequestBody() agent.RequestBody
+	RequestBody() interface{}
 }
 
 type HttpAgentRequestTransform interface {
 	Priority() int64
 }
 
-// CallRequest call request
-type CallRequest struct {
-	requestType string
-	canisterId  *principal.Principal
-	method      string
-	arg         []byte
-	sender      *principal.Principal
-	expiry      *Expiry
-}
-
-func (c *CallRequest) Type() string {
-	return c.requestType
-}
-
-func (c *CallRequest) Method() string {
-	return c.method
-}
-
-func (c *CallRequest) Sender() *principal.Principal {
-	return c.sender
-}
-
-func (c *CallRequest) IngressExpiry() *Expiry {
-	return c.expiry
-}
-
-type QueryRequest struct {
-	requestType string
-	canisterId  *principal.Principal
-	method      string
-	arg         []byte
-	sender      *principal.Principal
-	expiry      *Expiry
-}
-
-func (c *QueryRequest) Type() string {
-	return c.requestType
-}
-
-func (c *QueryRequest) Method() string {
-	return c.method
-}
-
-func (c *QueryRequest) Sender() *principal.Principal {
-	return c.sender
-}
-
-func (c *QueryRequest) IngressExpiry() *Expiry {
-	return c.expiry
-}
-
-type ReadStateRequest struct {
-	requestType string
-	paths       [][]byte
-	sender      *principal.Principal
-	expiry      *Expiry
-}
-
-func (c *ReadStateRequest) Type() string {
-	return c.requestType
-}
-
-func (c *ReadStateRequest) Method() string {
-	return "read_state"
-}
-
-func (c *ReadStateRequest) Sender() *principal.Principal {
-	return c.sender
-}
-
-func (c *ReadStateRequest) IngressExpiry() *Expiry {
-	return c.expiry
-}
-
 type HttpAgentRequest struct {
-	request  *HttpRequest
-	endpoint string
-	body     agent.RequestBody
+	HttpRequest *HttpRequest
+	Point       string
+	Body        ainterface.Request
 }
 
 func (r *HttpAgentRequest) Endpoint() string {
-	return r.endpoint
+	return r.Point
 }
 
-func (r *HttpAgentRequest) RequestBody() agent.RequestBody {
-	return r.body
+func (r *HttpAgentRequest) RequestBody() interface{} {
+	return r.Body
 }
 
 type HttpRequest struct {
