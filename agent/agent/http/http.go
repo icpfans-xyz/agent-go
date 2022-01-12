@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dfinity/agent-go/agent"
-	ainterface "github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/principal"
 	"github.com/fxamacker/cbor/v2"
+	"github.com/icpfans-xyz/agent-go/agent"
+	ainterface "github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/principal"
 	"golang.org/x/xerrors"
 )
 

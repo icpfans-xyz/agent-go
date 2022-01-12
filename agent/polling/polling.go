@@ -1,9 +1,9 @@
 package polling
 
 import (
-	"github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/agent/agent/http"
-	"github.com/dfinity/agent-go/principal"
+	"github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/agent/agent/http"
+	"github.com/icpfans-xyz/agent-go/principal"
 )
 
 type PollStrategy = func(*principal.Principal, *agent.RequestId, http.RequestStatusResponseStatus)

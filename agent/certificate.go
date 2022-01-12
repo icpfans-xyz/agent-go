@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dfinity/agent-go/principal/utils"
+	"github.com/icpfans-xyz/agent-go/principal/utils"
 )
 
 type NodeId int

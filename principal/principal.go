@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dfinity/agent-go/principal/utils"
+	"github.com/icpfans-xyz/agent-go/principal/utils"
 )
 
 const SELF_AUTHENTICATING_SUFFIX = 0x02

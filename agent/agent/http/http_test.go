@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/dfinity/agent-go/agent"
-	ainterface "github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/agent/agent/http"
-	"github.com/dfinity/agent-go/principal"
+	"github.com/icpfans-xyz/agent-go/agent"
+	ainterface "github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/agent/agent/http"
+	"github.com/icpfans-xyz/agent-go/principal"
 	"github.com/mix-labs/IC-Go/utils/idl"
 	"github.com/stretchr/testify/assert"
 )

@@ -7,8 +7,8 @@ import (
 	"encoding/asn1"
 	"errors"
 
-	"github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/principal"
+	"github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/principal"
 )
 
 var DomainSeparator = []byte("\x0Aic-request")

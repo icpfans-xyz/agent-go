@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/dfinity/agent-go/candid/utils"
+	"github.com/icpfans-xyz/agent-go/candid/utils"
 )
 
 var (

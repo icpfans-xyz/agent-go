@@ -1,8 +1,6 @@
-module github.com/dfinity/agent-go
+module github.com/icpfans-xyz/agent-go
 
 go 1.16
-
-replace github.com/dfinity/agent-go => ./
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -13,3 +11,5 @@ require (
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
+
+replace github.com/icpfans-xyz/agent-go => ./

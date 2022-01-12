@@ -1,9 +1,9 @@
 package agent
 
 import (
-	"github.com/dfinity/agent-go/agent/agent"
-	impl "github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/principal"
+	"github.com/icpfans-xyz/agent-go/agent/agent"
+	impl "github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/principal"
 )
 
 type GlobalInternetComputer interface {

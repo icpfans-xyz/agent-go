@@ -1,7 +1,7 @@
 package http
 
 import (
-	ainterface "github.com/dfinity/agent-go/agent/agent"
+	ainterface "github.com/icpfans-xyz/agent-go/agent/agent"
 )
 
 type Endpoint string

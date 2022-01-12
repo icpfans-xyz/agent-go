@@ -3,8 +3,8 @@ package principal_test
 import (
 	"testing"
 
-	"github.com/dfinity/agent-go/principal"
 	"github.com/fxamacker/cbor/v2"
+	"github.com/icpfans-xyz/agent-go/principal"
 	"github.com/stretchr/testify/assert"
 )
 

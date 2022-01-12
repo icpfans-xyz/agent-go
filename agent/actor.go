@@ -1,8 +1,8 @@
 package agent
 
 import (
-	impl "github.com/dfinity/agent-go/agent/agent"
-	"github.com/dfinity/agent-go/principal"
+	impl "github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/principal"
 )
 
 type CallConfig struct {
