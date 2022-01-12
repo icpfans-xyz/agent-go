@@ -10,7 +10,6 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/icpfans-xyz/agent-go/agent"
-	ainterface "github.com/icpfans-xyz/agent-go/agent/agent"
 	"github.com/icpfans-xyz/agent-go/principal"
 	"golang.org/x/xerrors"
 )
@@ -127,9 +126,9 @@ func (a *HttpAgent) GetPrincipal() *principal.Principal {
 	return a.identity.GetPrincipal()
 }
 
-func (a *HttpAgent) ReadState(canisterId *principal.Principal, options *ainterface.ReadStateOptions) (*ainterface.ReadStateResponse, error) {
+func (a *HttpAgent) ReadState(canisterId *principal.Principal, options *agent.ReadStateOptions) (*agent.ReadStateResponse, error) {
 	sender := a.identity.GetPrincipal()
-	state := ainterface.Request{
+	state := agent.Request{
 		Type:          RequestTypeReadState,
 		Paths:         options.Paths,
 		Sender:        sender.ToBytes(),
@@ -161,7 +160,7 @@ func (a *HttpAgent) ReadState(canisterId *principal.Principal, options *ainterfa
 	if err != nil {
 		return nil, err
 	}
-	var response ainterface.ReadStateResponse
+	var response agent.ReadStateResponse
 	err = cbor.Unmarshal(resp, &response)
 	if err != nil {
 		return nil, err
@@ -191,13 +190,13 @@ func (a *HttpAgent) fetch(path string, request *HttpRequest, body []byte) ([]byt
 	return body, nil
 }
 
-func (a *HttpAgent) Call(canisterId *principal.Principal, options *ainterface.CallOptions) (*ainterface.SubmitResponse, error) {
+func (a *HttpAgent) Call(canisterId *principal.Principal, options *agent.CallOptions) (*agent.SubmitResponse, error) {
 	ecid := canisterId
 	if options.EffectiveCanisterId != nil {
 		ecid = options.EffectiveCanisterId
 	}
 	sender := a.identity.GetPrincipal()
-	submit := ainterface.Request{
+	submit := agent.Request{
 		Type:          RequestTypeCall,
 		Sender:        sender.ToBytes(),
 		CanisterID:    canisterId.ToBytes(),
@@ -231,7 +230,7 @@ func (a *HttpAgent) Call(canisterId *principal.Principal, options *ainterface.Ca
 	if err != nil {
 		return nil, err
 	}
-	var response ainterface.Response
+	var response agent.Response
 	err = cbor.Unmarshal(resp, &response)
 	if err != nil {
 		return nil, fmt.Errorf("faild to parse response:%v, error:%v", string(resp), err)
@@ -239,9 +238,9 @@ func (a *HttpAgent) Call(canisterId *principal.Principal, options *ainterface.Ca
 	if !response.OK {
 		return nil, xerrors.Errorf("Server returned an error:%d,%s", response.Status, response.StatusText)
 	}
-	requestId := ainterface.RequestIdOf(submit)
+	requestId := agent.RequestIdOf(submit)
 
-	return &ainterface.SubmitResponse{
+	return &agent.SubmitResponse{
 		RequestId: requestId,
 		Response:  response,
 	}, nil
@@ -259,7 +258,7 @@ func (a *HttpAgent) Status() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var response ainterface.StatusResponse
+	var response agent.StatusResponse
 	err = cbor.Unmarshal(resp, &response)
 	if err != nil {
 		return nil, err
@@ -267,9 +266,9 @@ func (a *HttpAgent) Status() ([]byte, error) {
 	return response.RootKey, nil
 }
 
-func (a *HttpAgent) Query(canisterId *principal.Principal, options *ainterface.QueryFields) (*ainterface.QueryResponse, error) {
+func (a *HttpAgent) Query(canisterId *principal.Principal, options *agent.QueryFields) (*agent.QueryResponse, error) {
 	sender := a.identity.GetPrincipal()
-	query := ainterface.Request{
+	query := agent.Request{
 		Type:          RequestTypeQuery,
 		Sender:        sender.ToBytes(),
 		CanisterID:    canisterId.ToBytes(),
@@ -302,7 +301,7 @@ func (a *HttpAgent) Query(canisterId *principal.Principal, options *ainterface.Q
 	if err != nil {
 		return nil, err
 	}
-	var response ainterface.QueryResponse
+	var response agent.QueryResponse
 	err = cbor.Unmarshal(resp, &response)
 	if err != nil {
 		return nil, fmt.Errorf("faild to parse response:%v, error:%v", string(resp), err)

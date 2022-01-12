@@ -7,24 +7,23 @@ import (
 	"encoding/asn1"
 	"errors"
 
-	"github.com/icpfans-xyz/agent-go/agent/agent"
 	"github.com/icpfans-xyz/agent-go/principal"
 )
 
 var DomainSeparator = []byte("\x0Aic-request")
 
 type SignTransformBody struct {
-	Content      agent.Request `cbor:"content,omitempty"`
-	SenderPubkey []byte        `cbor:"sender_pubkey,omitempty"`
-	SenderSig    []byte        `cbor:"sender_sig,omitempty"`
+	Content      Request `cbor:"content,omitempty"`
+	SenderPubkey []byte  `cbor:"sender_pubkey,omitempty"`
+	SenderSig    []byte  `cbor:"sender_sig,omitempty"`
 }
 
 type AnonymousTransformBody struct {
-	Content agent.Request `cbor:"content,omitempty"`
+	Content Request `cbor:"content,omitempty"`
 }
 
 type TransformRequest struct {
-	agent.Request
+	Request
 	Body interface{}
 }
 
@@ -93,8 +92,8 @@ func (s *SignIdentity) GetPrincipal() *principal.Principal {
 	return s.principal
 }
 
-func (s *SignIdentity) TransformRequest(request agent.Request) (*TransformRequest, error) {
-	requestId := agent.RequestIdOf(request)
+func (s *SignIdentity) TransformRequest(request Request) (*TransformRequest, error) {
+	requestId := RequestIdOf(request)
 	sign, err := s.Sign(append(DomainSeparator, requestId[:]...))
 	if err != nil {
 		return nil, err
@@ -123,7 +122,7 @@ func (a *AnonymousIdentity) GetPrincipal() *principal.Principal {
 	return a.principal
 }
 
-func (s *AnonymousIdentity) TransformRequest(request agent.Request) (*TransformRequest, error) {
+func (s *AnonymousIdentity) TransformRequest(request Request) (*TransformRequest, error) {
 	return &TransformRequest{
 		Body: AnonymousTransformBody{
 			Content: request,

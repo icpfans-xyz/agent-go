@@ -1,7 +1,7 @@
 package http
 
 import (
-	ainterface "github.com/icpfans-xyz/agent-go/agent/agent"
+	"github.com/icpfans-xyz/agent-go/agent"
 )
 
 type Endpoint string
@@ -24,7 +24,7 @@ type HttpAgentRequestTransform interface {
 type HttpAgentRequest struct {
 	HttpRequest *HttpRequest
 	Point       string
-	Body        ainterface.Request
+	Body        agent.Request
 }
 
 func (r *HttpAgentRequest) Endpoint() string {

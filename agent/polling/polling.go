@@ -1,8 +1,8 @@
 package polling
 
 import (
-	"github.com/icpfans-xyz/agent-go/agent/agent"
-	"github.com/icpfans-xyz/agent-go/agent/agent/http"
+	"github.com/icpfans-xyz/agent-go/agent"
+	"github.com/icpfans-xyz/agent-go/agent/http"
 	"github.com/icpfans-xyz/agent-go/principal"
 )
 
@@ -20,7 +20,7 @@ type PollStrategyFactory = func() PollStrategy
  */
 func PollForResponse(agentimpl agent.Agent, canisterId *principal.Principal, requestId agent.RequestId, strategy PollStrategy) ([]byte, error) {
 	options := &agent.ReadStateOptions{
-		Paths: [][]byte{[]byte("request_status"), requestId},
+		Paths: [][][]byte{[][]byte{[]byte("request_status"), requestId[:]}},
 	}
 	_, err := agentimpl.ReadState(canisterId, options)
 	if err != nil {

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/icpfans-xyz/agent-go/agent"
-	ainterface "github.com/icpfans-xyz/agent-go/agent/agent"
-	"github.com/icpfans-xyz/agent-go/agent/agent/http"
+
+	"github.com/icpfans-xyz/agent-go/agent/http"
 	"github.com/icpfans-xyz/agent-go/principal"
 	"github.com/mix-labs/IC-Go/utils/idl"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +31,7 @@ func TestAgentStatus(t *testing.T) {
 }
 
 func TestAgent(t *testing.T) {
-	agent := setupAgent(t)
+	httpAgent := setupAgent(t)
 
 	canisterId, err := principal.FromString("rrkah-fqaaa-aaaaa-aaaaq-cai")
 	assert.Nil(t, err)
@@ -48,11 +48,11 @@ func TestAgent(t *testing.T) {
 	// })
 
 	t.Run("query", func(t *testing.T) {
-		options := &ainterface.QueryFields{
+		options := &agent.QueryFields{
 			MethodName: "greet",
 			Arg:        []byte("hello"),
 		}
-		resp, err := agent.Query(canisterId, options)
+		resp, err := httpAgent.Query(canisterId, options)
 		assert.Nil(t, err)
 		assert.NotNil(t, resp)
 	})
@@ -67,18 +67,18 @@ func TestAgent2(t *testing.T) {
 		Host:     "https://ic0.app",
 		Identity: agent.NewSignIdentity(agent.NewIdentityKey(pbBytes), nil),
 	}
-	agent, err := http.NewHttpAgent(*options)
+	httpAgent, err := http.NewHttpAgent(*options)
 	assert.Nil(t, err)
 
 	canisterID, _ := principal.FromString("bzsui-sqaaa-aaaah-qce2a-cai")
 	methodName := "supply"
 	arg, err := idl.Encode([]idl.Type{new(idl.Text)}, []interface{}{"Motoko"})
 	assert.Nil(t, err)
-	opts := &ainterface.QueryFields{
+	opts := &agent.QueryFields{
 		MethodName: methodName,
 		Arg:        arg,
 	}
-	resp, err := agent.Query(canisterID, opts)
+	resp, err := httpAgent.Query(canisterID, opts)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
 

@@ -1,13 +1,11 @@
 package agent
 
 import (
-	"github.com/icpfans-xyz/agent-go/agent/agent"
-	impl "github.com/icpfans-xyz/agent-go/agent/agent"
 	"github.com/icpfans-xyz/agent-go/principal"
 )
 
 type GlobalInternetComputer interface {
-	Agent() impl.Agent
+	Agent() Agent
 
 	Authentication() bool
 
@@ -30,5 +28,22 @@ type Identity interface {
 	 * after the transforms on the body of a request. The returned object can be
 	 * anything, but must be serializable to CBOR.
 	 */
-	TransformRequest(agent.Request) (*TransformRequest, error)
+	TransformRequest(Request) (*TransformRequest, error)
+}
+
+var (
+	window GlobalInternetComputer
+	global GlobalInternetComputer
+	self   GlobalInternetComputer
+)
+
+func GetDefaultAgent() Agent {
+	if self != nil {
+		return self.Agent()
+	} else if global != nil {
+		return global.Agent()
+	} else if window != nil {
+		return window.Agent()
+	}
+	panic("No Agent could be found.');")
 }
