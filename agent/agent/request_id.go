@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/aviate-labs/leb128"
+	"github.com/dfinity/agent-go/candid/utils"
 )
 
 var (
@@ -67,7 +67,7 @@ func RequestIdOf(req Request) RequestId {
 
 func encodeLEB128(i uint64) []byte {
 	bi := big.NewInt(int64(i))
-	e, _ := leb128.EncodeUnsigned(bi)
+	e := utils.LebEncode(bi)
 	return e
 }
 
