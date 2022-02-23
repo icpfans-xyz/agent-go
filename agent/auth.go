@@ -38,25 +38,25 @@ type KeyPair interface {
 	PublicKey() crypto.PublicKey
 }
 
-type IdentityKey struct {
+type Ed25519Identity struct {
 	PriKey ed25519.PrivateKey
 }
 
-func NewIdentityKey(pkey []byte) *IdentityKey {
-	return &IdentityKey{
+func NewEd25519Identity(pkey []byte) *Ed25519Identity {
+	return &Ed25519Identity{
 		PriKey: ed25519.NewKeyFromSeed(pkey),
 	}
 }
 
-func (t *IdentityKey) SecretKey() []byte {
+func (t *Ed25519Identity) SecretKey() []byte {
 	return t.PriKey.Seed()
 }
 
-func (t *IdentityKey) Sign(m []byte) ([]byte, error) {
+func (t *Ed25519Identity) Sign(m []byte) ([]byte, error) {
 	return ed25519.Sign(t.PriKey, m[:]), nil
 }
 
-func (t *IdentityKey) PublicKey() crypto.PublicKey {
+func (t *Ed25519Identity) PublicKey() crypto.PublicKey {
 	return t.PriKey.Public()
 }
 

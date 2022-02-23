@@ -7,8 +7,8 @@ import (
 	"github.com/icpfans-xyz/agent-go/agent"
 
 	"github.com/icpfans-xyz/agent-go/agent/http"
+	"github.com/icpfans-xyz/agent-go/candid/idl"
 	"github.com/icpfans-xyz/agent-go/principal"
-	"github.com/mix-labs/IC-Go/utils/idl"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,7 +65,7 @@ func TestAgent2(t *testing.T) {
 	options := &http.HttpAgentOptions{
 		Source:   nil,
 		Host:     "https://ic0.app",
-		Identity: agent.NewSignIdentity(agent.NewIdentityKey(pbBytes), nil),
+		Identity: agent.NewSignIdentity(agent.NewEd25519Identity(pbBytes), nil),
 	}
 	httpAgent, err := http.NewHttpAgent(*options)
 	assert.Nil(t, err)

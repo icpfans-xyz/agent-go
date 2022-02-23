@@ -3,6 +3,7 @@ module github.com/icpfans-xyz/agent-go
 go 1.16
 
 require (
+	github.com/aviate-labs/leb128 v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/kr/pretty v0.2.1 // indirect
