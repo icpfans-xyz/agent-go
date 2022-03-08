@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/icpfans-xyz/agent-go/principal/utils"
 )
 
@@ -20,14 +21,16 @@ const (
 	Pruned
 )
 
-type HashTree struct {
-	ID    NodeId
-	Label []byte
-	Left  *HashTree
-	Right *HashTree
-}
+// type HashTree struct {
+// 	ID    NodeId    `cbor:"id"`
+// 	Label []byte    `cbor:"label"`
+// 	Left  *HashTree `cbor:"left"`
+// 	Right *HashTree `cbor:"right"`
+// }
 
-func HashTreeToString(tree *HashTree) string {
+type HashTree []interface{}
+
+func HashTreeToString(tree HashTree) string {
 	indentFunc := func(s string) string {
 		strs := strings.Split(s, "\n")
 		for idx, str := range strs {
@@ -43,42 +46,54 @@ func HashTreeToString(tree *HashTree) string {
 		}
 		return string(bytes)
 	}
-	if tree.ID == Empty {
-		return "()"
-	} else if tree.ID == Fork {
-		left := HashTreeToString(tree.Left)
-		right := HashTreeToString(tree.Right)
-		return fmt.Sprintf("sub(\n left:\n%s\n---\n right:\n%s\n)", indentFunc(left), indentFunc(right))
-	} else if tree.ID == Labeled {
-		label := labelToString(tree.Label)
-		sub := HashTreeToString(tree.Left)
-		return fmt.Sprintf("label(\n label:\n%s sub:\n%s\n)", label, sub)
-	} else if tree.ID == Leaf {
-		return fmt.Sprintf("leaf(...%d bytes", len(tree.Label))
-	} else if tree.ID == Pruned {
-		return fmt.Sprintf("pruned(%s)", utils.Hex(tree.Label))
-	} else {
-		return "unknow()"
-	}
 
+	switch tree[0].(NodeId) {
+	case Empty:
+		return "()"
+	case Fork:
+		left := HashTreeToString(tree[1].(HashTree))
+		right := HashTreeToString(tree[2].(HashTree))
+		return fmt.Sprintf("sub(\n left:\n%s\n---\n right:\n%s\n)", indentFunc(left), indentFunc(right))
+	case Labeled:
+		label := labelToString(tree[1].([]byte))
+		sub := HashTreeToString(tree[2].(HashTree))
+		return fmt.Sprintf("label(\n label:\n%s sub:\n%s\n)", label, sub)
+	case Leaf:
+		return fmt.Sprintf("leaf(...%d bytes", len(tree[1].([]byte)))
+	case Pruned:
+		return fmt.Sprintf("pruned(%s)", utils.Hex(tree[1].([]byte)))
+	default:
+		return fmt.Sprintf("unknown(%v)", tree[0])
+	}
 }
 
 type Delegation struct {
-	SubnetId    []byte
-	Certificate []byte
+	SubnetId    []byte `cbor:"subnet_id"`
+	Certificate []byte `cbor:"certificate"`
 }
 
 type Cert struct {
-	Tree *HashTree
+	Tree HashTree `cbor:"tree"`
 
-	Signature  []byte
-	Delegation *Delegation
+	Signature  []byte     `cbor:"signature"`
+	Delegation Delegation `cbor:"delegation"`
 }
 
 type Certificate struct {
 	cert     *Cert
 	verified bool
 	rootKey  []byte
+}
+
+func NewCertificate(resp ReadStateResponse, agent Agent) (*Certificate, error) {
+	var cert Cert
+	err := cbor.Unmarshal(resp.Certificate, &cert)
+	if err != nil {
+		return nil, err
+	}
+	return &Certificate{
+		cert: &cert,
+	}, nil
 }
 
 func (c *Certificate) checkState() error {
@@ -88,23 +103,23 @@ func (c *Certificate) checkState() error {
 	return nil
 }
 
-func (c *Certificate) flattenForks(tree *HashTree) []*HashTree {
-	if tree.ID == Empty {
-		return []*HashTree{}
-	} else if tree.ID == Fork {
-		return append(c.flattenForks(tree.Left), c.flattenForks(tree.Right)...)
+func (c *Certificate) flattenForks(tree HashTree) []HashTree {
+	if tree[0] == Empty {
+		return []HashTree{}
+	} else if tree[0] == Fork {
+		return append(c.flattenForks(tree[1].(HashTree)), c.flattenForks(tree[2].(HashTree))...)
 	} else {
-		return []*HashTree{tree}
+		return []HashTree{tree}
 	}
 }
 
-func (c *Certificate) findLabel(label []byte, trees []*HashTree) (*HashTree, error) {
+func (c *Certificate) findLabel(label []byte, trees []HashTree) (HashTree, error) {
 	if len(label) == 0 {
 		return nil, errors.New("undefined")
 	}
 	for _, tree := range trees {
-		if tree.ID == Labeled {
-			if bytes.Compare(label, tree.Label) == 0 {
+		if tree[0] == Labeled {
+			if bytes.Equal(label, tree[1].([]byte)) {
 				return tree, nil
 			}
 		}
@@ -112,10 +127,10 @@ func (c *Certificate) findLabel(label []byte, trees []*HashTree) (*HashTree, err
 	return nil, errors.New("undefined")
 }
 
-func (c *Certificate) lookupPath(path [][]byte, tree *HashTree) ([]byte, error) {
+func (c *Certificate) lookupPath(path [][]byte, tree HashTree) ([]byte, error) {
 	if len(path) == 0 {
-		if tree.ID == Leaf {
-			return tree.Label, nil
+		if tree[0] == Leaf {
+			return tree[1].([]byte), nil
 		} else {
 			return nil, errors.New("undefined")
 		}
@@ -139,8 +154,23 @@ func (c *Certificate) Lookup(path [][]byte) ([]byte, error) {
 	return c.lookupPath(path, c.cert.Tree)
 }
 
-func (c *Certificate) verify() bool {
-	return false
+func (c *Certificate) Verify() bool {
+	// root, err := Reconstruct(c.cert.Tree)
+	// if err != nil {
+	// 	return false
+	// }
+
+	//TODO: verify root bls
+	// const rootHash = await reconstruct(this.cert.tree);
+	// const derKey = await this._checkDelegation(this.cert.delegation);
+	// const sig = this.cert.signature;
+	// const key = extractDER(derKey);
+	// const msg = concat(domain_sep('ic-state-root'), rootHash);
+	// const res = await blsVerify(new Uint8Array(key), new Uint8Array(sig), new Uint8Array(msg));
+	// this.verified = res;
+
+	c.verified = true
+	return true
 }
 
 var (
@@ -156,37 +186,38 @@ func ExtractDER(der []byte) ([]byte, error) {
 		return nil, errors.New("BLS DER-encoded public key must be ${expectedLength} bytes long")
 	}
 	prefix := der[:prefixLen]
-	if bytes.Compare(prefix, DER_PREFIX) != 0 {
+	if bytes.Equal(prefix, DER_PREFIX) {
 		return nil, errors.New("BLS DER-encoded public key is invalid. Expect the following prefix: ${DER_PREFIX}, but get ${prefix}")
 	}
 	return der[prefixLen:], nil
 }
 
-func Reconstruct(t *HashTree) ([]byte, error) {
-	if t.ID == Empty {
+func Reconstruct(tree HashTree) ([]byte, error) {
+	switch tree[0].(NodeId) {
+	case Empty:
 		return utils.Sha256(domainSep("ic-hashtree-empty")), nil
-	} else if t.ID == Pruned {
-		return t.Label, nil
-	} else if t.ID == Leaf {
-		return utils.Sha256(domainSep("ic-hashtree-leaf"), t.Label), nil
-	} else if t.ID == Labeled {
-		bytes, err := Reconstruct(t.Left)
+	case Fork:
+		left, err := Reconstruct(tree[1].(HashTree))
 		if err != nil {
 			return nil, err
 		}
-		return utils.Sha256(domainSep("ic-hashtree-labeled"), t.Label, bytes), nil
-	} else if t.ID == Fork {
-		left, err := Reconstruct(t.Left)
-		if err != nil {
-			return nil, err
-		}
-		right, err := Reconstruct(t.Right)
+		right, err := Reconstruct(tree[2].(HashTree))
 		if err != nil {
 			return nil, err
 		}
 		return utils.Sha256(domainSep("ic-hashtree-fork"), left, right), nil
-	} else {
-		return nil, errors.New("undefined")
+	case Labeled:
+		bytes, err := Reconstruct(tree[2].(HashTree))
+		if err != nil {
+			return nil, err
+		}
+		return utils.Sha256(domainSep("ic-hashtree-labeled"), tree[1].([]byte), bytes), nil
+	case Leaf:
+		return utils.Sha256(domainSep("ic-hashtree-leaf"), tree[1].([]byte)), nil
+	case Pruned:
+		return tree[1].([]byte), nil
+	default:
+		return nil, fmt.Errorf("unknown(%v)", tree[0])
 	}
 }
 
@@ -194,10 +225,10 @@ func domainSep(s string) []byte {
 	return append(utils.FromUint32(uint32(len(s))), []byte(s)...)
 }
 
-func LookupPath(path [][]byte, t *HashTree) ([]byte, error) {
+func LookupPath(path [][]byte, t HashTree) ([]byte, error) {
 	if len(path) == 0 {
-		if t.ID == Leaf {
-			return t.Label, nil
+		if t[0] == Leaf {
+			return t[1].([]byte), nil
 		}
 	} else {
 		return nil, errors.New("undefined")
@@ -213,32 +244,32 @@ func LookupPath(path [][]byte, t *HashTree) ([]byte, error) {
 	return LookupPath(path[1:], tree)
 }
 
-func flattenForks(t *HashTree) ([]*HashTree, error) {
-	if t.ID == Empty {
-		return []*HashTree{}, nil
-	} else if t.ID == Fork {
-		lt, err := flattenForks(t.Left)
+func flattenForks(t HashTree) ([]HashTree, error) {
+	if t[0] == Empty {
+		return []HashTree{}, nil
+	} else if t[0] == Fork {
+		lt, err := flattenForks(t[1].(HashTree))
 		if err != nil {
 			return nil, err
 		}
-		rt, err := flattenForks(t.Right)
+		rt, err := flattenForks(t[2].(HashTree))
 		if err != nil {
 			return nil, err
 		}
 		return append(lt, rt...), nil
 	} else {
-		return []*HashTree{t}, nil
+		return []HashTree{t}, nil
 	}
 }
 
-func findLabel(l []byte, ts []*HashTree) (*HashTree, error) {
+func findLabel(l []byte, ts []HashTree) (HashTree, error) {
 	if len(ts) == 0 {
 		return nil, errors.New("undefined")
 	}
 	for _, t := range ts {
-		if t.ID == Labeled {
-			if bytes.Compare(l, t.Label) == 0 {
-				return t.Left, nil
+		if t[0] == Labeled {
+			if bytes.Equal(l, t[1].([]byte)) {
+				return t[1].(HashTree), nil
 			}
 		}
 	}
